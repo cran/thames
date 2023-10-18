@@ -1,0 +1,14 @@
+8dd1564f5259769963371b27346c469a *DESCRIPTION
+f055b7726504974ce6c51963193b7deb *NAMESPACE
+6749f21b9d4886454e63f63b8f112ab5 *R/bound_par_cor.R
+6f4f8ae11c491d21c1e27073d2a5f889 *R/thames.R
+55c6d5c062f01ddc515e5c3283f1ffc3 *R/trunc_quantile.R
+42648db7f0849d2f4582dce4a097ce6a *build/vignette.rds
+aa6dfb8d4695c3e336975fe7dbae69fb *inst/doc/multivariate-gaussian.R
+9841c863f9ff42f64b219f8cf4a1fbcc *inst/doc/multivariate-gaussian.Rmd
+1db043f9cb0250ab7d1545e2a2754a13 *inst/doc/multivariate-gaussian.html
+8090ee32dcecc9ae1ccadaf856b6d79c *man/bound_dirichlet.Rd
+53a2839eade29fa112def56ce4e1fc92 *man/bound_par_cor.Rd
+1d7bf6e58bc00ba55b34eab6d9baccb1 *man/thames.Rd
+b034a84ba21f003b1014cf0fac054b4b *man/trunc_quantile.Rd
+9841c863f9ff42f64b219f8cf4a1fbcc *vignettes/multivariate-gaussian.Rmd

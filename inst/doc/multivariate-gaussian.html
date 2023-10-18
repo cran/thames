@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>Multivariate Gaussian marginal likelihood via THAMES</title>
+<style type="text/css">
+/**
+ * Prism.s theme ported from highlight.js's xcode style
+ */
+pre code {
+  padding: 1em;
+}
+.token.comment {
+  color: #007400;
+}
+.token.punctuation {
+  color: #999;
+}
+.token.tag,
+.token.selector {
+  color: #aa0d91;
+}
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol {
+  color: #1c00cf;
+}
+.token.property,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin {
+  color: #c41a16;
+}
+.token.inserted {
+  background-color: #ccffd8;
+}
+.token.deleted {
+  background-color: #ffebe9;
+}
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #9a6e3a;
+}
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #836c28;
+}
+.token.function,
+.token.class-name {
+  color: #DD4A68;
+}
+.token.regex,
+.token.important,
+.token.variable {
+  color: #5c2699;
+}
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+.token.italic {
+  font-style: italic;
+}
+</style>
+<style type="text/css">
+body {
+  font-family: sans-serif;
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+body, .footnotes, code { font-size: .9em; }
+li li { font-size: .95em; }
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+pre, img { max-width: 100%; }
+pre, pre:hover {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+pre code {
+  display: block;
+  overflow-x: auto;
+}
+code { font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace; }
+:not(pre) > code, code[class] { background-color: #F8F8F8; }
+code.language-undefined, pre > code:not([class]) {
+  background-color: inherit;
+  border: 1px solid #eee;
+}
+table {
+  margin: auto;
+  border-top: 1px solid #666;
+}
+table thead th { border-bottom: 1px solid #ddd; }
+th, td { padding: 5px; }
+thead, tfoot, tr:nth-child(even) { background: #eee; }
+blockquote {
+  color: #666;
+  margin: 0;
+  padding-left: 1em;
+  border-left: 0.5em solid #eee;
+}
+hr, .footnotes::before { border: 1px dashed #ddd; }
+.frontmatter { text-align: center; }
+#TOC .numbered li { list-style: none; }
+#TOC .numbered { padding-left: 0; }
+#TOC .numbered ul { padding-left: 1em; }
+table, .body h2 { border-bottom: 1px solid #666; }
+.body .appendix, .appendix ~ h2 { border-bottom-style: dashed; }
+.footnote-ref a::before { content: "["; }
+.footnote-ref a::after { content: "]"; }
+section.footnotes::before {
+  content: "";
+  display: block;
+  max-width: 20em;
+}
+
+@media print {
+  body {
+    font-size: 12pt;
+    max-width: 100%;
+  }
+  tr, img { page-break-inside: avoid; }
+}
+@media only screen and (min-width: 992px) {
+  pre { white-space: pre; }
+}
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+</head>
+<body>
+<div class="include-before">
+</div>
+<div class="frontmatter">
+<div class="title"><h1>Multivariate Gaussian marginal likelihood via THAMES</h1></div>
+<div class="author"><h2></h2></div>
+<div class="date"><h3></h3></div>
+</div>
+<div class="body">
+<pre><code class="language-r">set.seed(2023)
+library(thames)
+</code></pre>
+<p>To use the function <code>thames()</code> we only need two things</p>
+<ol>
+<li>A \(T\times d\) matrix of parameters drawn from the posterior distribution. The columns are the parameters (dimension \(d\)) and the rows are the \(T\) different posterior draws.</li>
+<li>The vector of unnormalized log posterior values of length \(T\) (sum of the log prior and the log likelihood for each drawn parameter).</li>
+</ol>
+<p>To illustrate the use of the <code>thames()</code> function we give a toy example on multivariate Gaussian data. For more details on the method, see the paper
+<a href="https://arxiv.org/abs/2305.08952">Metodiev M, Perrot-Dockès M, Ouadah S, Irons N. J., Raftery A. E. (2023), Easily Computed Marginal Likelihoods from Posterior Simulation Using the THAMES Estimator.</a></p>
+<p>Here the data \(y_i, i=1,\ldots,n\) are drawn independently
+from a multivariate normal distribution:
+\begin{eqnarray*}
+y_i|\mu &amp; \stackrel{\rm iid}{\sim} &amp; {\rm MVN}_d(\mu,  I_d), ;; i=1,\ldots, n,
+\end{eqnarray*}
+along with a prior distribution on the mean vector \(\mu\):
+\begin{equation*}
+p(\mu)= {\rm MVN}_d(\mu; 0_d, s_0 I_d),
+\end{equation*}
+with \(s_0 &gt; 0\). It can be shown that the posterior distribution of the mean vector \(\mu\) given the data \(D=\{y_1, \ldots, y_n\}\) is given by:
+\begin{equation}\label{eq:postMultiGauss}
+p(\mu|D) = {\rm MVN}_d(\mu; m_n,s_n I_d),
+\end{equation}
+where \(m_n=n\bar{y}/(n+1/s_0)\), \(\bar{y}=(1/n)\sum_{i=1}^n y_i\), and \(s_n=1/(n +1/s_0)\).</p>
+<h3 id="toy-example-d-1-n-20">Toy example: d = 1, n = 20</h3>
+<p>We fix \(s_0\) (the variance of the prior) and \(\mu\) to 1 (note that the results are similar for some other values).</p>
+<pre><code class="language-r">s0      &lt;- 1
+mu_star &lt;- 1
+n       &lt;- 20
+d       &lt;- 1
+</code></pre>
+<p>We simulate values of Y and calculate the associated \(s_n\) and \(m_n\)</p>
+<pre><code class="language-r">library(mvtnorm)
+
+Y =  rmvnorm(n, mu_star, diag(d))
+sn = 1/(n+1/s0)
+mn = sum(Y)/(n + 1/s0)
+</code></pre>
+<p>To use <code>thames()</code> we need  a sample drawn from the posterior of the parameters. In this toy example the only parameter is \(\mu\), and we can draw from the posterior exactly. (More generally, MCMC can be used to obtain approximate posterior samples.) Here we take \(2000\) samples.</p>
+<pre><code class="language-r">mu_sample = rmvnorm(2000, mean=mn,  sn*diag(d))
+</code></pre>
+<p>Now we calculate the unnormalized log posterior for each \(\mu^{(i)}\).</p>
+<p>We first calculate the prior on each sample:</p>
+<pre><code class="language-r">reg_log_prior &lt;- function(param,sig2) {
+  d &lt;- length(param)
+  p &lt;- dmvnorm(param, rep(0,d), (sig2)*diag(d), log = TRUE)
+  return(p)
+}
+
+log_prior &lt;- apply(mu_sample, 1, reg_log_prior, s0)
+</code></pre>
+<p>and the likelihood of the data for each sampled parameter:</p>
+<pre><code class="language-r">reg_log_likelihood &lt;- function(param, X) {
+  n &lt;- nrow(X)
+  d &lt;- length(param)
+  sum(dmvnorm(X, param, diag(d),log = TRUE))
+}
+
+log_likelihood &lt;- apply(mu_sample, 1, reg_log_likelihood, Y)
+</code></pre>
+<p>and then sum the two to get the log posterior:</p>
+<pre><code class="language-r">log_post &lt;- log_prior + log_likelihood
+</code></pre>
+<p>We can now estimate the marginal likelihood using THAMES:</p>
+<pre><code class="language-r">result &lt;- thames(log_post,mu_sample)
+</code></pre>
+<p>The THAMES estimate of the log marginal likelihood is then</p>
+<pre><code class="language-r">-result$log_zhat_inv
+#&gt; [1] -26.36138
+</code></pre>
+<p>The upper and lower bounds of a confidence interval based on asymptotic normality of the estimator (a 95% interval by default) are</p>
+<pre><code class="language-r">-result$log_zhat_inv_L 
+#&gt; [1] -26.32752
+-result$log_zhat_inv_U
+#&gt; [1] -26.39413
+</code></pre>
+<p>If we instead want a 90% confidence interval, we specify a lower quantile of \(0.05\):</p>
+<pre><code class="language-r">result_90 &lt;- thames(log_post,mu_sample, p = 0.05)
+-result_90$log_zhat_inv_L 
+#&gt; [1] -26.33305
+-result_90$log_zhat_inv_U
+#&gt; [1] -26.38894
+</code></pre>
+<p>To check our estimate, we can calculate the Gaussian log marginal likelihood analytically as
+$$
+\ell(y) = -\frac{nd}{2}\log(2\pi)-\frac{d}{2}\log(s_0n+1)-\frac{1}{2}\sum_{i=1}^n|y_i|^2+ \frac{n^2}{2(n+1/s_0)}|\bar{y}|^2.
+$$</p>
+<pre><code class="language-r">- n*d*log(2*pi)/2 - d*log(s0*n+1)/2 - sum(Y^2)/2 + sum(colSums(Y)^2)/(2*(n+1/s0))
+#&gt; [1] -26.34293
+</code></pre>
+<h3 id="in-higher-dimensions">In higher dimensions</h3>
+<p>We can do exactly the same thing if \(Y_i \in \mathbb{R}^d\) with \(d&gt;1\)</p>
+<pre><code class="language-r">s0      &lt;- 1
+n       &lt;- 20
+d       &lt;- 2
+mu_star &lt;- rep(1,d)
+Y =  rmvnorm(n, mu_star, diag(d))
+sn = 1/(n+1/s0)
+mn = apply(Y,2,sum)/(n + 1/s0)
+mu_sample = rmvnorm(2000, mean=mn,  sn*diag(d))
+
+mvg_log_post &lt;- function(param, X, sig2){
+  n &lt;- nrow(X)
+  d &lt;- length(param)
+  l &lt;- sum(dmvnorm(X, param, diag(d),log = TRUE))
+  p &lt;- dmvnorm(param, rep(0,d), (sig2)*diag(d), log = TRUE)
+  return(p + l)
+}
+log_post &lt;- apply(mu_sample, 1,mvg_log_post,Y,s0)
+result &lt;- thames(log_post,mu_sample)
+-result$log_zhat_inv
+#&gt; [1] -54.4726
+</code></pre>
+<p>To check our estimate, we again calculate the Gaussian marginal likelihood analytically:</p>
+<pre><code class="language-r">- n*d*log(2*pi)/2 - d*log(s0*n+1)/2 - sum(Y^2)/2 + sum(colSums(Y)^2)/(2*(n+1/s0))
+#&gt; [1] -54.46546
+</code></pre>
+</div>
+<div class="include-after">
+</div>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/combine/npm/katex/dist/katex.min.js,npm/katex/dist/contrib/auto-render.min.js,npm/@xiee/utils/js/render-katex.js" defer></script>
+</body>
+</html>
