@@ -17,13 +17,20 @@
 #' theta_ext <- runif(100)
 #' theta_ins <- runif(100) / 100
 bound_par_cor = function(theta_hat, sigma_svd, bound, radius, n_simuls=1e5){
-  # calculate inverse of sigma_hat
+  
+  if(length(sigma_svd)==1){
+    #if the dimension is 1, the one-dimensional ellipsoid is just a line
+    simuls = runif(n_simuls,min=theta_hat-radius*sqrt(sigma_svd),
+                   max=theta_hat+radius*sqrt(sigma_svd))
+    return(mean(Vectorize(bound)(simuls)))
+  } else{
+    # calculate inverse of sigma_hat
   sigma_inv <- sigma_svd$v %*% diag(sigma_svd$d^(-1)) %*% t(sigma_svd$v)
 
   # sample uniformly from the ellipsoid A
   simuls = runif_in_ellipsoid(n_simuls, sigma_inv, radius) +
     t(matrix(rep(theta_hat,n_simuls),ncol=n_simuls))
-
+  }
   # calculate proportion of Monte Carlo samples contained in the posterior support.
   mean(apply(simuls,1,bound))
 }
